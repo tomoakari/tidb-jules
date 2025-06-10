@@ -7,21 +7,23 @@ WORKDIR /app
 # Copy package.json and package-lock.json (or npm-shrinkwrap.json)
 COPY package*.json ./
 
-# Install production dependencies
-RUN npm install --omit=dev
+# Install ALL dependencies (including devDependencies for the build)
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
+# Prepare SvelteKit (generates .svelte-kit/tsconfig.json etc.)
+RUN npm run prepare
+
 # Build the SvelteKit application
 RUN npm run build
+
+# Remove development dependencies
+RUN npm prune --production
 
 # Expose the port the app runs on
 EXPOSE 8080
 
 # Define the command to run the application
-# The PORT environment variable will be set by Cloud Run.
-# SvelteKit with adapter-node by default listens to process.env.PORT or 3000.
-# The 'start' script in package.json is 'node build'.
-# The build output of adapter-node is a standalone Node server.
 CMD ["npm", "start"]
